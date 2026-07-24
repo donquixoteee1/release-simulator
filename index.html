@@ -24,6 +24,7 @@
       font-family:var(--hand);
       letter-spacing:.035em;
       cursor:default;
+      overflow-x:hidden;
     }
     button,input,textarea{font:inherit}
     button{color:inherit}
@@ -34,6 +35,7 @@
     }
     .app{
       min-height:100vh;
+      min-height:100svh;
       position:relative;
       overflow:hidden;
     }
@@ -80,6 +82,7 @@
       position:absolute;
       inset:0;
       min-height:100vh;
+      min-height:100svh;
       opacity:0;
       transform:translateY(16px);
       pointer-events:none;
@@ -93,6 +96,7 @@
     }
     .page-inner{
       min-height:100vh;
+      min-height:100svh;
       padding:122px 42px 44px;
     }
     .hairline{border-top:1px solid var(--line)}
@@ -123,17 +127,27 @@
     }
     .home-grid{
       display:grid;
-      grid-template-columns:minmax(320px,1.1fr) minmax(260px,.9fr);
-      gap:8vw;
-      align-items:end;
+      grid-template-columns:minmax(0,1fr);
+      gap:clamp(64px,9vh,112px);
+      align-items:start;
       min-height:calc(100vh - 166px);
     }
+    .home-intro,.home-steps{min-width:0}
+    .home-steps{
+      width:100%;
+      align-self:end;
+    }
     .hero-title{
-      max-width:980px;
-      margin:28px 0 34px;
-      font-size:clamp(58px,10vw,150px);
-      line-height:.86;
-      transform:rotate(-1deg);
+      max-width:none;
+      margin:clamp(34px,6vh,72px) 0 34px;
+      font-size:clamp(22px,10.2vw,176px);
+      line-height:.9;
+      letter-spacing:-.045em;
+      transform:rotate(-.5deg);
+    }
+    .hero-title-line{
+      display:block;
+      white-space:nowrap;
     }
     .hero-copy{
       max-width:480px;
@@ -143,15 +157,15 @@
       margin:0 0 42px;
     }
     .vertical-note{
-      writing-mode:vertical-rl;
-      text-orientation:mixed;
-      justify-self:end;
-      align-self:center;
+      writing-mode:horizontal-tb;
+      justify-self:start;
+      align-self:start;
       color:#8a867d;
-      font-size:12px;
-      letter-spacing:.22em;
-      line-height:2;
-      max-height:520px;
+      font-size:14px;
+      letter-spacing:.16em;
+      line-height:1.9;
+      max-height:none;
+      margin:0 0 30px;
     }
     .index-row{
       display:grid;
@@ -170,6 +184,29 @@
       gap:48px;
       align-items:stretch;
       min-height:calc(100vh - 166px);
+    }
+    .upload-shell{
+      min-height:calc(100vh - 166px);
+    }
+    .upload-intro{
+      width:calc((100% - 48px) / 2);
+      margin-bottom:34px;
+    }
+    .upload-intro .panel-title{margin-bottom:24px}
+    .draw-work-area{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:48px;
+      align-items:start;
+    }
+    .draw-column{min-width:0}
+    .preview-column{
+      min-width:0;
+    }
+    .draw-work-area .preview-stage{
+      width:100%;
+      height:clamp(380px,32vw,520px);
+      min-height:0;
     }
     .panel{
       border:1px solid var(--line);
@@ -236,7 +273,7 @@
       padding:18px;
     }
     .draw-zone{
-      height:390px;
+      height:clamp(380px,32vw,520px);
       border:2px solid #111;
       background:#fff;
       position:relative;
@@ -738,20 +775,116 @@
       transition:opacity .35s var(--ease), transform .35s var(--ease);
     }
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    @media (max-width:1100px){
+      .work-area,.about-layout{
+        grid-template-columns:minmax(0,1fr);
+        gap:30px;
+      }
+      .upload-intro{width:100%}
+      .draw-work-area{
+        grid-template-columns:minmax(0,1fr);
+        gap:30px;
+      }
+      .draw-work-area .preview-stage{
+        height:clamp(380px,62vw,620px);
+        min-height:0;
+      }
+      .ritual-object{min-height:520px}
+    }
     @media (max-width:860px){
       .nav{padding:0 22px;height:66px}
       .nav-links{gap:14px}
       .nav button{font-size:10px;letter-spacing:.18em}
       .page-inner{padding:96px 22px 30px}
-      .home-grid,.work-area,.about-layout{grid-template-columns:1fr;gap:30px}
-      .vertical-note{writing-mode:horizontal-tb;justify-self:start;max-height:none}
+      .home-grid{gap:56px}
       .index-row{grid-template-columns:60px 1fr;gap:14px}
       .index-row span:last-child{display:none}
       .panel{padding:24px;min-height:auto}
-      .preview-stage,.ritual-object{min-height:420px}
+      .draw-zone{height:clamp(320px,62vw,440px)}
+      .ritual-object{min-height:420px}
       .space-meta{left:22px;bottom:118px;max-width:310px}
       .space-controls{left:22px;right:auto;bottom:30px;flex-wrap:wrap}
       .info-card{left:22px;right:22px;top:92px;width:auto}
+    }
+    @media (max-width:560px){
+      .nav{
+        height:62px;
+        padding:0 16px;
+      }
+      .logo{
+        font-size:10px;
+        letter-spacing:.14em;
+      }
+      .nav-links{gap:10px}
+      .nav button{
+        font-size:9px;
+        letter-spacing:.08em;
+      }
+      .page-inner{padding:84px 16px 24px}
+      .home-grid{gap:46px}
+      .hero-title{
+        margin:30px 0 24px;
+        font-size:9.6vw;
+        line-height:.94;
+      }
+      .hero-copy{
+        margin-bottom:30px;
+        font-size:14px;
+      }
+      .vertical-note{
+        font-size:12px;
+        letter-spacing:.1em;
+        margin-bottom:22px;
+      }
+      .index-row{
+        grid-template-columns:44px minmax(0,1fr);
+        gap:10px;
+        padding:15px 0;
+        line-height:1.55;
+      }
+      .panel{
+        padding:20px 16px;
+        border-radius:14px 18px 13px 20px / 18px 13px 20px 14px;
+      }
+      .panel-title{margin-bottom:24px}
+      .panel-title h2{
+        font-size:clamp(34px,11vw,54px);
+      }
+      .draw-zone{height:clamp(280px,82vw,380px)}
+      .draw-hint{
+        left:13px;
+        top:13px;
+        font-size:12px;
+      }
+      .draw-toolbar{
+        gap:12px 14px;
+      }
+      .size-control{
+        width:100%;
+      }
+      .size-control input{
+        flex:1;
+        min-width:0;
+      }
+      .mini-note{
+        width:100%;
+        margin-left:0;
+      }
+      .draw-work-area .preview-stage{height:clamp(280px,82vw,380px)}
+      .actions{align-items:flex-start}
+      .about-layout h1{font-size:clamp(46px,16vw,76px)}
+      .space-controls{right:16px;left:16px}
+      .toggle{width:100%}
+      .toggle button{flex:1;padding:12px 8px}
+      .info-card{left:16px;right:16px;top:78px}
+    }
+    @media (prefers-reduced-motion:reduce){
+      html{scroll-behavior:auto}
+      *,*:before,*:after{
+        animation-duration:.01ms !important;
+        animation-iteration-count:1 !important;
+        transition-duration:.01ms !important;
+      }
     }
   </style>
 </head>
@@ -769,13 +902,16 @@
     <section class="page active" id="home">
       <div class="page-inner">
         <div class="home-grid">
-          <div>
+          <div class="home-intro">
             <div class="kicker">Digital ritual for obsolete belongings</div>
-            <h1 class="hero-title serif">Release what no longer belongs to your life.</h1>
+            <h1 class="hero-title serif">
+              <span class="hero-title-line">Release what no longer</span>
+              <span class="hero-title-line">belongs to your life.</span>
+            </h1>
             <p class="hero-copy">每一件被放生的旧物，都是某段生活留下的微小坐标。</p>
             <button class="btn" data-page="upload">Start Releasing</button>
           </div>
-          <div>
+          <div class="home-steps">
             <p class="vertical-note">画下一件你决定舍弃的闲置物品，将它放生到宇宙中吧。</p>
             <div class="index-row"><span>01</span><span>Draw an object with simple colored lines</span><span>DRAW</span></div>
             <div class="index-row"><span>02</span><span>Hold to release it as a floating trace</span><span>TRACE</span></div>
@@ -787,8 +923,8 @@
 
     <section class="page" id="upload">
       <div class="page-inner">
-        <div class="work-area">
-          <div class="panel">
+        <div class="upload-shell">
+          <div class="upload-intro">
             <div class="panel-title">
               <div>
                 <div class="kicker">01 / Draw</div>
@@ -796,35 +932,39 @@
               </div>
             </div>
             <p class="caption">直接画出一个准备告别的物品。线条不需要准确，越像随手画下的记忆越好。</p>
-            <div class="draw-zone" id="drawZone">
-              <canvas id="drawCanvas" aria-label="Draw your object here"></canvas>
-              <div class="draw-hint" id="drawHint">Draw here / choose a system color</div>
-            </div>
-            <div class="draw-toolbar">
-              <button class="tool-btn active" id="penTool" type="button">Pen</button>
-              <button class="tool-btn" id="eraserTool" type="button">Eraser</button>
-              <div class="color-palette" id="colorPalette" aria-label="System colors">
-                <button class="color-dot active" type="button" data-color="#050505" style="--c:#050505" aria-label="Black"></button>
-                <button class="color-dot" type="button" data-color="#e94b35" style="--c:#e94b35" aria-label="Red"></button>
-                <button class="color-dot" type="button" data-color="#1f67d2" style="--c:#1f67d2" aria-label="Blue"></button>
-                <button class="color-dot" type="button" data-color="#17985a" style="--c:#17985a" aria-label="Green"></button>
-                <button class="color-dot" type="button" data-color="#f0b429" style="--c:#f0b429" aria-label="Yellow"></button>
-                <button class="color-dot" type="button" data-color="#8c5ad8" style="--c:#8c5ad8" aria-label="Purple"></button>
-              </div>
-              <label class="size-control">Size <input id="brushSize" type="range" min="3" max="34" value="9" /></label>
-              <button class="tool-btn" id="undoDraw" type="button">Undo</button>
-              <button class="tool-btn" id="clearDraw" type="button">Clear</button>
-              <button class="tool-btn" id="flipDraw" type="button">Flip</button>
-              <span class="mini-note">facing any direction is fine</span>
-            </div>
-            <div class="actions">
-              <button class="btn" id="generateBtn">Make It Drift</button>
-              <span class="status" id="uploadStatus">Waiting for a small drawing.</span>
-            </div>
           </div>
-          <div>
-            <div class="preview-stage" id="generatedPreview">
-              <div class="placeholder-orbit">No Object</div>
+          <div class="draw-work-area">
+            <div class="draw-column">
+              <div class="draw-zone" id="drawZone">
+                <canvas id="drawCanvas" aria-label="Draw your object here"></canvas>
+                <div class="draw-hint" id="drawHint">Draw here / choose a system color</div>
+              </div>
+              <div class="draw-toolbar">
+                <button class="tool-btn active" id="penTool" type="button">Pen</button>
+                <button class="tool-btn" id="eraserTool" type="button">Eraser</button>
+                <div class="color-palette" id="colorPalette" aria-label="System colors">
+                  <button class="color-dot active" type="button" data-color="#050505" style="--c:#050505" aria-label="Black"></button>
+                  <button class="color-dot" type="button" data-color="#e94b35" style="--c:#e94b35" aria-label="Red"></button>
+                  <button class="color-dot" type="button" data-color="#1f67d2" style="--c:#1f67d2" aria-label="Blue"></button>
+                  <button class="color-dot" type="button" data-color="#17985a" style="--c:#17985a" aria-label="Green"></button>
+                  <button class="color-dot" type="button" data-color="#f0b429" style="--c:#f0b429" aria-label="Yellow"></button>
+                  <button class="color-dot" type="button" data-color="#8c5ad8" style="--c:#8c5ad8" aria-label="Purple"></button>
+                </div>
+                <label class="size-control">Size <input id="brushSize" type="range" min="3" max="34" value="9" /></label>
+                <button class="tool-btn" id="undoDraw" type="button">Undo</button>
+                <button class="tool-btn" id="clearDraw" type="button">Clear</button>
+                <button class="tool-btn" id="flipDraw" type="button">Flip</button>
+                <span class="mini-note">facing any direction is fine</span>
+              </div>
+              <div class="actions">
+                <button class="btn" id="generateBtn">Make It Drift</button>
+                <span class="status" id="uploadStatus">Waiting for a small drawing.</span>
+              </div>
+            </div>
+            <div class="preview-column">
+              <div class="preview-stage" id="generatedPreview">
+                <div class="placeholder-orbit">No Object</div>
+              </div>
             </div>
           </div>
         </div>
@@ -1127,13 +1267,25 @@
       color:'#050505',
       strokes:[],
       current:null,
-      dirty:false
+      dirty:false,
+      size:{ width:0, height:0 }
     };
 
     function resizeDrawCanvas(){
       const rect = $('#drawZone').getBoundingClientRect();
       const dpr = Math.max(1, window.devicePixelRatio || 1);
       const snapshot = drawState.dirty ? drawCanvas.toDataURL('image/png') : null;
+      if(drawState.size.width && drawState.size.height){
+        const scaleX = rect.width / drawState.size.width;
+        const scaleY = rect.height / drawState.size.height;
+        [...drawState.strokes, drawState.current].filter(Boolean).forEach(stroke => {
+          stroke.points.forEach(point => {
+            point.x *= scaleX;
+            point.y *= scaleY;
+          });
+        });
+      }
+      drawState.size = { width:rect.width, height:rect.height };
       drawCanvas.width = Math.round(rect.width * dpr);
       drawCanvas.height = Math.round(rect.height * dpr);
       drawCtx.setTransform(dpr,0,0,dpr,0,0);
@@ -2022,9 +2174,13 @@
       focusItem(mine);
     });
 
+    let resizeFrame = 0;
     window.addEventListener('resize', () => {
-      resizeDrawCanvas();
-      if(state.page === 'universe') resetSpaceView();
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(() => {
+        resizeDrawCanvas();
+        if(state.page === 'universe') resetSpaceView();
+      });
     });
     resizeDrawCanvas();
     resetSpaceView();
