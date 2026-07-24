@@ -1,0 +1,2034 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Release Simulator</title>
+  <style>
+    :root{
+      --paper:#f7f6f2;
+      --ink:#111;
+      --muted:#72706a;
+      --line:#d8d5cc;
+      --black:#030303;
+      --white:#f6f3ea;
+      --ease:cubic-bezier(.19,1,.22,1);
+      --hand:"Bradley Hand","Marker Felt","Segoe Print","Chalkboard SE","Comic Sans MS",cursive;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background:var(--paper);
+      color:var(--ink);
+      font-family:var(--hand);
+      letter-spacing:.035em;
+      cursor:default;
+    }
+    button,input,textarea{font:inherit}
+    button{color:inherit}
+    .serif{
+      font-family:var(--hand);
+      font-weight:400;
+      letter-spacing:-.025em;
+    }
+    .app{
+      min-height:100vh;
+      position:relative;
+      overflow:hidden;
+    }
+    .nav{
+      position:fixed;
+      z-index:20;
+      left:0; right:0; top:0;
+      height:74px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 42px;
+      mix-blend-mode:difference;
+      color:white;
+      pointer-events:none;
+    }
+    .logo{
+      pointer-events:auto;
+      border:0;
+      background:transparent;
+      padding:8px 0;
+      font-size:13px;
+      text-transform:uppercase;
+      letter-spacing:.24em;
+    }
+    .nav-links{
+      pointer-events:auto;
+      display:flex;
+      align-items:center;
+      gap:28px;
+    }
+    .nav button{
+      border:0;
+      background:transparent;
+      padding:8px 0;
+      font-size:14px;
+      letter-spacing:.08em;
+      text-transform:none;
+      opacity:.74;
+      transition:opacity .35s var(--ease);
+    }
+    .nav button:hover,.nav button.active{opacity:1}
+    .page{
+      position:absolute;
+      inset:0;
+      min-height:100vh;
+      opacity:0;
+      transform:translateY(16px);
+      pointer-events:none;
+      transition:opacity .7s var(--ease), transform .7s var(--ease);
+      overflow:auto;
+    }
+    .page.active{
+      opacity:1;
+      transform:translateY(0);
+      pointer-events:auto;
+    }
+    .page-inner{
+      min-height:100vh;
+      padding:122px 42px 44px;
+    }
+    .hairline{border-top:1px solid var(--line)}
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      min-height:46px;
+      padding:0 22px;
+      border:1px solid var(--ink);
+      background:transparent;
+      color:var(--ink);
+      text-transform:none;
+      letter-spacing:.08em;
+      font-size:16px;
+      border-radius:999px 720px 880px 760px / 720px 999px 760px 880px;
+      transition:background .4s var(--ease), color .4s var(--ease), opacity .4s var(--ease), transform .4s var(--ease);
+    }
+    .btn:hover{background:var(--ink); color:var(--paper); transform:translateY(-1px)}
+    .btn.ghost{border-color:rgba(255,255,255,.6); color:var(--white)}
+    .btn.ghost:hover{background:var(--white); color:var(--black)}
+    .kicker{
+      font-size:15px;
+      letter-spacing:.08em;
+      text-transform:none;
+      color:var(--muted);
+    }
+    .home-grid{
+      display:grid;
+      grid-template-columns:minmax(320px,1.1fr) minmax(260px,.9fr);
+      gap:8vw;
+      align-items:end;
+      min-height:calc(100vh - 166px);
+    }
+    .hero-title{
+      max-width:980px;
+      margin:28px 0 34px;
+      font-size:clamp(58px,10vw,150px);
+      line-height:.86;
+      transform:rotate(-1deg);
+    }
+    .hero-copy{
+      max-width:480px;
+      color:#37352f;
+      line-height:1.9;
+      font-size:15px;
+      margin:0 0 42px;
+    }
+    .vertical-note{
+      writing-mode:vertical-rl;
+      text-orientation:mixed;
+      justify-self:end;
+      align-self:center;
+      color:#8a867d;
+      font-size:12px;
+      letter-spacing:.22em;
+      line-height:2;
+      max-height:520px;
+    }
+    .index-row{
+      display:grid;
+      grid-template-columns:90px 1fr 130px;
+      gap:22px;
+      padding:18px 0;
+      border-top:1px solid var(--line);
+      color:#34322d;
+      font-size:12px;
+      letter-spacing:.08em;
+    }
+    .index-row:last-child{border-bottom:1px solid var(--line)}
+    .work-area{
+      display:grid;
+      grid-template-columns:minmax(280px,.82fr) minmax(320px,1.18fr);
+      gap:48px;
+      align-items:stretch;
+      min-height:calc(100vh - 166px);
+    }
+    .panel{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.22);
+      min-height:520px;
+      padding:34px;
+      position:relative;
+      border-radius:18px 24px 15px 28px / 24px 15px 28px 18px;
+    }
+    .panel-title{
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      align-items:flex-start;
+      margin-bottom:34px;
+    }
+    .panel-title h2{
+      margin:0;
+      font-size:clamp(32px,5vw,74px);
+      line-height:.92;
+    }
+    .caption{
+      color:var(--muted);
+      line-height:1.9;
+      font-size:13px;
+      max-width:360px;
+    }
+    .dropzone{
+      height:360px;
+      display:grid;
+      place-items:center;
+      border:1px dashed #b7b3aa;
+      background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,0));
+      text-align:center;
+      position:relative;
+      overflow:hidden;
+      transition:border-color .4s var(--ease), background .4s var(--ease);
+    }
+    .dropzone.drag{border-color:#111;background:rgba(255,255,255,.55)}
+    .dropzone input{
+      position:absolute;
+      inset:0;
+      opacity:0;
+      cursor:pointer;
+    }
+    .drop-text{
+      z-index:1;
+      padding:30px;
+    }
+    .drop-text strong{
+      display:block;
+      font-size:12px;
+      letter-spacing:.28em;
+      text-transform:uppercase;
+      margin-bottom:16px;
+    }
+    .drop-text span{color:var(--muted);font-size:13px}
+    .photo-preview{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      filter:grayscale(1) contrast(1.08);
+      display:none;
+      padding:18px;
+    }
+    .draw-zone{
+      height:390px;
+      border:2px solid #111;
+      background:#fff;
+      position:relative;
+      overflow:hidden;
+      border-radius:22px 16px 27px 14px / 18px 26px 14px 22px;
+    }
+    .draw-zone canvas{
+      width:100%;
+      height:100%;
+      display:block;
+      touch-action:none;
+      cursor:crosshair;
+    }
+    .draw-hint{
+      position:absolute;
+      left:18px;
+      top:16px;
+      color:rgba(0,0,0,.34);
+      font-size:15px;
+      letter-spacing:.05em;
+      text-transform:none;
+      pointer-events:none;
+    }
+    .draw-toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px 16px;
+      align-items:center;
+      margin-top:18px;
+      padding-top:18px;
+      border-top:1px solid var(--line);
+    }
+    .tool-btn{
+      border:0;
+      background:transparent;
+      padding:0;
+      font-size:15px;
+      letter-spacing:.06em;
+      text-transform:none;
+      color:#4c4942;
+      border-bottom:1px solid transparent;
+      transition:color .3s var(--ease), border-color .3s var(--ease);
+    }
+    .tool-btn:hover,.tool-btn.active{color:#111;border-color:#111}
+    .color-palette{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:0 2px;
+    }
+    .color-dot{
+      width:22px;
+      height:22px;
+      border-radius:50%;
+      border:1px solid rgba(0,0,0,.25);
+      background:var(--c);
+      padding:0;
+      position:relative;
+      transition:transform .25s var(--ease), box-shadow .25s var(--ease);
+    }
+    .color-dot.active{
+      transform:translateY(-2px);
+      box-shadow:0 0 0 3px #fff,0 0 0 4px #111;
+    }
+    .size-control{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:var(--muted);
+      font-size:14px;
+      letter-spacing:.06em;
+      text-transform:none;
+    }
+    .size-control input{
+      accent-color:#111;
+      width:110px;
+    }
+    .mini-note{
+      margin-left:auto;
+      color:var(--muted);
+      font-size:11px;
+      letter-spacing:.08em;
+    }
+    .preview-stage{
+      min-height:520px;
+      background:var(--black);
+      display:grid;
+      place-items:center;
+      position:relative;
+      overflow:hidden;
+      border:1px solid #111;
+      color:var(--white);
+    }
+    .preview-stage:before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 18% 28%,rgba(255,255,255,.23) 0 1px,transparent 1.6px),
+        radial-gradient(circle at 82% 14%,rgba(255,255,255,.20) 0 1px,transparent 1.4px),
+        radial-gradient(circle at 62% 78%,rgba(255,255,255,.14) 0 1px,transparent 1.4px),
+        radial-gradient(circle at 42% 44%,rgba(255,255,255,.10) 0 1px,transparent 1.4px);
+      opacity:.7;
+    }
+    .preview-stage canvas,.preview-stage svg,.preview-stage img{
+      position:relative;
+      max-width:72%;
+      max-height:72%;
+      filter:drop-shadow(0 0 12px rgba(255,255,255,.1));
+    }
+    .placeholder-orbit{
+      width:180px;
+      height:180px;
+      border:1px solid rgba(255,255,255,.26);
+      border-radius:50%;
+      display:grid;
+      place-items:center;
+      color:rgba(255,255,255,.58);
+      font-size:15px;
+      letter-spacing:.06em;
+      text-transform:none;
+      animation:slowSpin 18s linear infinite;
+    }
+    @keyframes slowSpin{to{transform:rotate(360deg)}}
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      margin-top:24px;
+      align-items:center;
+    }
+    .status{
+      color:var(--muted);
+      font-size:12px;
+      letter-spacing:.08em;
+      line-height:1.7;
+    }
+    .form-grid{
+      display:grid;
+      gap:18px;
+      margin-top:20px;
+    }
+    .field label{
+      display:block;
+      margin-bottom:9px;
+      font-size:10px;
+      letter-spacing:.25em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .field input,.field textarea{
+      width:100%;
+      border:0;
+      border-bottom:1px solid var(--line);
+      background:transparent;
+      padding:12px 0;
+      outline:none;
+      color:var(--ink);
+      resize:vertical;
+      min-height:46px;
+      transition:border-color .35s var(--ease);
+    }
+    .field textarea{min-height:86px;line-height:1.7}
+    .field input:focus,.field textarea:focus{border-color:#111}
+    .ritual-object{
+      background:var(--black);
+      min-height:520px;
+      display:grid;
+      place-items:center;
+      position:relative;
+      overflow:hidden;
+    }
+    .ritual-object:after{
+      content:"";
+      position:absolute;
+      width:72%;
+      height:72%;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:50%;
+      transform:rotate(-18deg) scaleY(.55);
+    }
+    .ritual-object > *{position:relative;z-index:1}
+    .ritual-object.launching > *{
+      animation:releaseLift .95s var(--ease) forwards;
+    }
+    .ritual-object img,.ritual-object canvas,.ritual-object svg{
+      max-width:74%;
+      max-height:74%;
+      object-fit:contain;
+      filter:drop-shadow(0 0 14px rgba(255,255,255,.12));
+    }
+    @keyframes releaseLift{
+      0%{transform:translateY(0) scale(1) rotate(0deg);opacity:1;filter:drop-shadow(0 0 14px rgba(255,255,255,.12))}
+      58%{transform:translateY(-44px) scale(.82) rotate(7deg);opacity:.88;filter:drop-shadow(0 0 28px rgba(255,255,255,.36))}
+      100%{transform:translateY(-180px) scale(.26) rotate(18deg);opacity:0;filter:drop-shadow(0 0 36px rgba(255,255,255,.5))}
+    }
+    .release-hold{
+      width:100%;
+      display:grid;
+      gap:10px;
+    }
+    .release-progress{
+      height:3px;
+      width:min(320px,100%);
+      background:#d8d5cc;
+      overflow:hidden;
+      position:relative;
+    }
+    .release-progress span{
+      display:block;
+      height:100%;
+      width:0%;
+      background:#111;
+      transition:width .08s linear;
+    }
+    .hold-note{
+      color:var(--muted);
+      font-size:11px;
+      letter-spacing:.12em;
+    }
+    .universe-page{
+      background:var(--black);
+      color:var(--white);
+      overflow:hidden;
+    }
+    .universe-shell{
+      position:absolute;
+      inset:0;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 21% 24%,rgba(255,255,255,.22) 0 1px,transparent 1.6px),
+        radial-gradient(circle at 42% 18%,rgba(255,255,255,.13) 0 1px,transparent 1.5px),
+        radial-gradient(circle at 77% 29%,rgba(255,255,255,.18) 0 1px,transparent 1.6px),
+        radial-gradient(circle at 10% 76%,rgba(255,255,255,.12) 0 1px,transparent 1.4px),
+        radial-gradient(circle at 91% 81%,rgba(255,255,255,.20) 0 1px,transparent 1.7px),
+        #030303;
+    }
+    .space-meta{
+      position:absolute;
+      z-index:8;
+      left:42px;
+      bottom:36px;
+      max-width:420px;
+      pointer-events:none;
+      transition:opacity .6s var(--ease), transform .6s var(--ease);
+    }
+    .universe-shell.released-mode .space-meta{
+      opacity:0;
+      transform:translateY(14px);
+    }
+    .space-meta h2{
+      margin:12px 0 18px;
+      color:var(--white);
+      font-size:clamp(42px,7vw,104px);
+      line-height:.86;
+    }
+    .space-meta p{
+      color:rgba(246,243,234,.62);
+      line-height:1.85;
+      font-size:13px;
+    }
+    .space-controls{
+      position:absolute;
+      z-index:10;
+      right:42px;
+      bottom:36px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .toggle{
+      display:flex;
+      border:1px solid rgba(255,255,255,.35);
+    }
+    .toggle button{
+      border:0;
+      background:transparent;
+      color:rgba(255,255,255,.62);
+      padding:13px 16px;
+      font-size:10px;
+      letter-spacing:.22em;
+      text-transform:uppercase;
+    }
+    .toggle button.on{
+      color:#000;
+      background:var(--white);
+    }
+    .space-canvas{
+      position:absolute;
+      left:0;
+      top:0;
+      width:3600px;
+      height:2800px;
+      transform-origin:0 0;
+      will-change:transform;
+    }
+    .constellation-layer{
+      position:absolute;
+      inset:0;
+      z-index:2;
+      pointer-events:none;
+      opacity:.72;
+    }
+    .space-object{
+      position:absolute;
+      z-index:3;
+      width:130px;
+      height:130px;
+      display:grid;
+      place-items:center;
+      background:transparent;
+      border:0;
+      padding:0;
+      color:var(--white);
+      animation:float var(--dur,11s) ease-in-out infinite alternate;
+      cursor:pointer;
+      opacity:.9;
+      transition:opacity .35s var(--ease), filter .35s var(--ease);
+    }
+    .space-object:hover{
+      opacity:1;
+      filter:drop-shadow(0 0 10px rgba(255,255,255,.24));
+    }
+    .space-object.mine{
+      filter:drop-shadow(0 0 14px rgba(255,255,255,.35));
+    }
+    .space-object.just-released:after{
+      content:"";
+      position:absolute;
+      inset:-14px;
+      border:1px solid rgba(255,255,255,.42);
+      border-radius:50%;
+      animation:pulseOrbit 1.8s var(--ease) infinite;
+      pointer-events:none;
+    }
+    @keyframes pulseOrbit{
+      from{transform:scale(.82);opacity:.75}
+      to{transform:scale(1.35);opacity:0}
+    }
+    .space-object svg,.space-object canvas{
+      max-width:100%;
+      max-height:100%;
+      pointer-events:none;
+    }
+    .space-object img{
+      max-width:100%;
+      max-height:100%;
+      pointer-events:none;
+      object-fit:contain;
+    }
+    @keyframes float{
+      from{transform:translate3d(-8px,10px,0) rotate(var(--r1,-4deg))}
+      to{transform:translate3d(12px,-12px,0) rotate(var(--r2,5deg))}
+    }
+    .info-card{
+      position:absolute;
+      z-index:12;
+      right:42px;
+      top:112px;
+      width:min(360px,calc(100vw - 84px));
+      border:0;
+      background:
+        radial-gradient(circle at 50% -6px, transparent 0 10px, #fbfaf6 11px),
+        linear-gradient(#fbfaf6,#f3f0e8);
+      color:#111;
+      padding:32px 28px 34px;
+      opacity:0;
+      transform:translateY(12px);
+      pointer-events:none;
+      transition:opacity .45s var(--ease), transform .45s var(--ease);
+      box-shadow:0 18px 48px rgba(0,0,0,.42);
+      filter:contrast(1.02) saturate(.85);
+      clip-path:polygon(0 0,100% 0,100% calc(100% - 14px),96% 100%,92% calc(100% - 10px),88% 100%,84% calc(100% - 10px),80% 100%,76% calc(100% - 10px),72% 100%,68% calc(100% - 10px),64% 100%,60% calc(100% - 10px),56% 100%,52% calc(100% - 10px),48% 100%,44% calc(100% - 10px),40% 100%,36% calc(100% - 10px),32% 100%,28% calc(100% - 10px),24% 100%,20% calc(100% - 10px),16% 100%,12% calc(100% - 10px),8% 100%,4% calc(100% - 10px),0 100%);
+    }
+    .info-card:before{
+      content:"";
+      position:absolute;
+      top:10px;
+      left:50%;
+      width:22px;
+      height:22px;
+      transform:translateX(-50%);
+      border-radius:50%;
+      background:radial-gradient(circle at 35% 30%,#555,#171717 64%,#050505);
+      box-shadow:0 2px 7px rgba(0,0,0,.35);
+    }
+    .info-card:after{
+      content:"";
+      position:absolute;
+      inset:0;
+      opacity:.16;
+      pointer-events:none;
+      background:
+        repeating-linear-gradient(0deg,rgba(0,0,0,.04) 0 1px,transparent 1px 4px),
+        radial-gradient(circle at 20% 30%,rgba(0,0,0,.08),transparent 24%);
+      mix-blend-mode:multiply;
+    }
+    .info-card.show{
+      opacity:1;
+      transform:translateY(0);
+      pointer-events:auto;
+    }
+    .receipt-head,.receipt-line,.receipt-foot,.info-card dl,.info-card h3{position:relative;z-index:1}
+    .receipt-head{
+      margin-top:18px;
+      text-align:center;
+      color:#111;
+    }
+    .receipt-title{
+      font-size:28px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .receipt-sub{
+      font-size:15px;
+      margin-top:4px;
+      color:#333;
+    }
+    .receipt-line{
+      margin:14px 0;
+      border-top:2px dashed #111;
+      opacity:.75;
+    }
+    .info-card h3{
+      margin:12px 0 16px;
+      font-size:32px;
+      line-height:1.02;
+      text-align:center;
+      color:#111;
+      word-break:break-word;
+    }
+    .info-card dl{
+      margin:0;
+      display:grid;
+      gap:14px;
+    }
+    .info-card dt{
+      color:#111;
+      font-size:14px;
+      letter-spacing:.08em;
+      text-transform:none;
+      margin-bottom:5px;
+    }
+    .info-card dd{
+      margin:0;
+      color:#111;
+      line-height:1.55;
+      font-size:15px;
+      border-bottom:1px dotted rgba(0,0,0,.35);
+      padding-bottom:8px;
+    }
+    .receipt-foot{
+      margin-top:16px;
+      text-align:center;
+      font-size:20px;
+      letter-spacing:.18em;
+      color:#111;
+    }
+    .about-layout{
+      display:grid;
+      grid-template-columns:minmax(300px,.9fr) minmax(320px,1.1fr);
+      gap:8vw;
+      min-height:calc(100vh - 166px);
+      align-items:center;
+    }
+    .about-layout h1{
+      font-size:clamp(56px,8vw,128px);
+      line-height:.86;
+      margin:24px 0;
+    }
+    .about-text{
+      display:grid;
+      gap:32px;
+      color:#38352f;
+      line-height:2;
+      font-size:15px;
+    }
+    .quote-box{
+      border-left:1px solid var(--ink);
+      padding-left:26px;
+      font-size:clamp(24px,3vw,42px);
+      line-height:1.08;
+      color:#111;
+    }
+    .toast{
+      position:fixed;
+      z-index:40;
+      left:50%;
+      bottom:30px;
+      transform:translateX(-50%) translateY(12px);
+      background:#111;
+      color:var(--paper);
+      padding:14px 18px;
+      font-size:11px;
+      letter-spacing:.2em;
+      text-transform:uppercase;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .35s var(--ease), transform .35s var(--ease);
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    @media (max-width:860px){
+      .nav{padding:0 22px;height:66px}
+      .nav-links{gap:14px}
+      .nav button{font-size:10px;letter-spacing:.18em}
+      .page-inner{padding:96px 22px 30px}
+      .home-grid,.work-area,.about-layout{grid-template-columns:1fr;gap:30px}
+      .vertical-note{writing-mode:horizontal-tb;justify-self:start;max-height:none}
+      .index-row{grid-template-columns:60px 1fr;gap:14px}
+      .index-row span:last-child{display:none}
+      .panel{padding:24px;min-height:auto}
+      .preview-stage,.ritual-object{min-height:420px}
+      .space-meta{left:22px;bottom:118px;max-width:310px}
+      .space-controls{left:22px;right:auto;bottom:30px;flex-wrap:wrap}
+      .info-card{left:22px;right:22px;top:92px;width:auto}
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <nav class="nav">
+      <button class="logo" data-page="home">Release Simulator</button>
+      <div class="nav-links">
+        <button data-page="about">About</button>
+        <button data-page="universe">Archive</button>
+        <button data-page="upload">Release</button>
+      </div>
+    </nav>
+
+    <section class="page active" id="home">
+      <div class="page-inner">
+        <div class="home-grid">
+          <div>
+            <div class="kicker">Digital ritual for obsolete belongings</div>
+            <h1 class="hero-title serif">Release what no longer belongs to your life.</h1>
+            <p class="hero-copy">每一件被放生的旧物，都是某段生活留下的微小坐标。</p>
+            <button class="btn" data-page="upload">Start Releasing</button>
+          </div>
+          <div>
+            <p class="vertical-note">画下一件你决定舍弃的闲置物品，将它放生到宇宙中吧。</p>
+            <div class="index-row"><span>01</span><span>Draw an object with simple colored lines</span><span>DRAW</span></div>
+            <div class="index-row"><span>02</span><span>Hold to release it as a floating trace</span><span>TRACE</span></div>
+            <div class="index-row"><span>03</span><span>Release it into the collective archive</span><span>ORBIT</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" id="upload">
+      <div class="page-inner">
+        <div class="work-area">
+          <div class="panel">
+            <div class="panel-title">
+              <div>
+                <div class="kicker">01 / Draw</div>
+                <h2 class="serif">Draw the object you want to release.</h2>
+              </div>
+            </div>
+            <p class="caption">直接画出一个准备告别的物品。线条不需要准确，越像随手画下的记忆越好。</p>
+            <div class="draw-zone" id="drawZone">
+              <canvas id="drawCanvas" aria-label="Draw your object here"></canvas>
+              <div class="draw-hint" id="drawHint">Draw here / choose a system color</div>
+            </div>
+            <div class="draw-toolbar">
+              <button class="tool-btn active" id="penTool" type="button">Pen</button>
+              <button class="tool-btn" id="eraserTool" type="button">Eraser</button>
+              <div class="color-palette" id="colorPalette" aria-label="System colors">
+                <button class="color-dot active" type="button" data-color="#050505" style="--c:#050505" aria-label="Black"></button>
+                <button class="color-dot" type="button" data-color="#e94b35" style="--c:#e94b35" aria-label="Red"></button>
+                <button class="color-dot" type="button" data-color="#1f67d2" style="--c:#1f67d2" aria-label="Blue"></button>
+                <button class="color-dot" type="button" data-color="#17985a" style="--c:#17985a" aria-label="Green"></button>
+                <button class="color-dot" type="button" data-color="#f0b429" style="--c:#f0b429" aria-label="Yellow"></button>
+                <button class="color-dot" type="button" data-color="#8c5ad8" style="--c:#8c5ad8" aria-label="Purple"></button>
+              </div>
+              <label class="size-control">Size <input id="brushSize" type="range" min="3" max="34" value="9" /></label>
+              <button class="tool-btn" id="undoDraw" type="button">Undo</button>
+              <button class="tool-btn" id="clearDraw" type="button">Clear</button>
+              <button class="tool-btn" id="flipDraw" type="button">Flip</button>
+              <span class="mini-note">facing any direction is fine</span>
+            </div>
+            <div class="actions">
+              <button class="btn" id="generateBtn">Make It Drift</button>
+              <span class="status" id="uploadStatus">Waiting for a small drawing.</span>
+            </div>
+          </div>
+          <div>
+            <div class="preview-stage" id="generatedPreview">
+              <div class="placeholder-orbit">No Object</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" id="ritual">
+      <div class="page-inner">
+        <div class="work-area">
+          <div class="ritual-object" id="ritualObject"></div>
+          <div class="panel">
+            <div class="panel-title">
+              <div>
+                <div class="kicker">02 / Ritual</div>
+                <h2 class="serif">Give it one last sentence.</h2>
+              </div>
+            </div>
+            <p class="caption">填写的信息会以匿名、克制的方式出现在宇宙档案卡片中。</p>
+            <form class="form-grid" id="ritualForm">
+              <div class="field">
+                <label for="itemName">Item name</label>
+                <input id="itemName" placeholder="old cup / a blue sweater / unnamed object" />
+              </div>
+              <div class="field">
+                <label for="keptReason">Why did you keep it?</label>
+                <textarea id="keptReason" placeholder="Because it carried a version of me."></textarea>
+              </div>
+              <div class="field">
+                <label for="letGoReason">Why do you let it go?</label>
+                <textarea id="letGoReason" placeholder="Because I do not need to keep proving that memory existed."></textarea>
+              </div>
+              <div class="field">
+                <label for="farewellNote">Farewell note</label>
+                <input id="farewellNote" placeholder="Go lightly." />
+              </div>
+              <div class="actions">
+                <div class="release-hold">
+                  <button class="btn" id="holdRelease" type="button">Hold to Release</button>
+                  <div class="release-progress" aria-hidden="true"><span id="releaseProgress"></span></div>
+                  <div class="hold-note" id="holdNote">长按按钮，进度蓄满后将物品发射到宇宙空间。</div>
+                </div>
+                <button class="btn" type="button" data-page="upload">Back</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page universe-page" id="universe">
+      <div class="universe-shell" id="universeShell">
+        <canvas class="constellation-layer" id="constellationLayer"></canvas>
+        <div class="space-canvas" id="spaceCanvas"></div>
+        <div class="space-meta">
+          <div class="kicker">03 / Collective Archive</div>
+          <h2 class="serif">A quiet orbit of human traces.</h2>
+          <p>拖动画布浏览，滚轮缩放。点击物品查看它被放生前的匿名信息。</p>
+        </div>
+        <div class="space-controls">
+          <div class="toggle">
+            <button class="on" id="allToggle">All Objects</button>
+            <button id="myToggle">My Object</button>
+          </div>
+          <button class="btn ghost" id="findMine">Find Mine</button>
+          <button class="btn ghost" id="resetView">Reset View</button>
+        </div>
+        <aside class="info-card" id="infoCard" aria-live="polite"></aside>
+      </div>
+    </section>
+
+    <section class="page" id="about">
+      <div class="page-inner">
+        <div class="about-layout">
+          <div>
+            <div class="kicker">About the simulator</div>
+            <h1 class="serif">Not disposal, but a ceremony of distance.</h1>
+          </div>
+          <div class="about-text">
+            <p>Release Simulator 不是二手交易平台，也不是鼓励现实浪费的工具。它是一件关于告别、占有、记忆与释放的互动艺术装置。</p>
+            <p>用户放生的不是“垃圾”，而是曾经属于自己、如今决定放下的物品。现实中的闲置物，在数字宇宙中获得一次轻盈、抽离、匿名的漂流。</p>
+            <div class="quote-box serif">All released objects become a collective archive of small human attachments.</div>
+            <p>黑色宇宙不是终点，而是一个情绪缓冲带：让我们承认物品曾经重要，也允许它不再继续占据生活。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <div class="toast" id="toast">Released into archive</div>
+  </main>
+  <script>
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    const state = {
+      page: 'home',
+      uploadedFile: null,
+      uploadedImage: null,
+      generatedDataUrl: null,
+      generatedKind: 'svg',
+      userItemId: null,
+      lastReleasedItemId: null,
+      itemsLoaded:false,
+      filter: 'all',
+      pan: { x: 0, y: 0 },
+      scale: 1,
+      dragging: false,
+      dragStart: { x: 0, y: 0 },
+      panStart: { x: 0, y: 0 }
+    };
+
+    const samples = [
+      {
+        id:'sample-1', name:'Porcelain cup', city:'Hangzhou', date:'2026-07-12',
+        kept:'It stayed on the desk through several apartments.',
+        reason:'The handle broke, and the morning it belonged to has ended.',
+        note:'Thank you for keeping my hands warm.', x:1420, y:1110, size:118, variant:'cup'
+      },
+      {
+        id:'sample-2', name:'Soft toy', city:'Chengdu', date:'2026-07-14',
+        kept:'A childhood witness, too tender to throw away.',
+        reason:'It can become memory without occupying a shelf.',
+        note:'Sleep elsewhere now.', x:1760, y:1320, size:150, variant:'toy'
+      },
+      {
+        id:'sample-3', name:'Old headphones', city:'Shanghai', date:'2026-07-18',
+        kept:'They carried a private archive of train rides.',
+        reason:'Silence feels more accurate now.',
+        note:'Release the songs.', x:1180, y:1520, size:132, variant:'headphones'
+      },
+      {
+        id:'sample-4', name:'Notebook', city:'Guangzhou', date:'2026-07-19',
+        kept:'Unfinished plans made it feel alive.',
+        reason:'Some futures do not need storage.',
+        note:'Remain open.', x:2140, y:930, size:126, variant:'book'
+      },
+      {
+        id:'sample-5', name:'Small ring', city:'Beijing', date:'2026-07-21',
+        kept:'It was proof that a promise once had weight.',
+        reason:'The proof is no longer required.',
+        note:'Orbit without me.', x:2300, y:1590, size:104, variant:'ring'
+      }
+    ];
+
+    const galaxyMeta = {
+      unfinished:{ name:'未完成星系', anchor:{x:1020,y:780}, color:'#c5a3ff', words:['未完成','没读完','没有读完','没织完','作品','书','围巾','草稿','unfinished','book'] },
+      relationship:{ name:'旧关系星系', anchor:{x:2140,y:820}, color:'#ff8a76', words:['礼物','纪念','共同','关系','家具','gift','souvenir'] },
+      impulse:{ name:'冲动消费带', anchor:{x:2660,y:1540}, color:'#ffd166', words:['冲动','没用','买来','闲置','unused','shopping'] },
+      childhood:{ name:'童年轨道', anchor:{x:940,y:1740}, color:'#65a6ff', words:['童年','玩具','校服','日记','toy','diary'] },
+      broken:{ name:'故障卫星区', anchor:{x:1900,y:1900}, color:'#53d18a', words:['坏','故障','电子','相机','耳机','broken','camera','headphone'] },
+      nameless:{ name:'无名尘埃', anchor:{x:1780,y:1260}, color:'#f6f3ea', words:['不想说','无名','unknown','unnamed'] }
+    };
+
+    function classifyLocalGalaxy(item){
+      const text = `${item.name || ''} ${item.kept || ''} ${item.reason || ''} ${item.note || ''}`.toLowerCase();
+      let best = ['nameless', 0];
+      Object.entries(galaxyMeta).forEach(([key, meta]) => {
+        const score = meta.words.reduce((sum, word) => sum + (text.includes(word.toLowerCase()) ? 1 : 0), 0);
+        if(score > best[1]) best = [key, score];
+      });
+      return best[1] ? best[0] : 'nameless';
+    }
+
+    function seededNumber(seed, offset=0){
+      let h = 2166136261;
+      const text = `${seed}:${offset}`;
+      for(let i=0;i<text.length;i++){
+        h ^= text.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return ((h >>> 0) % 10000) / 10000;
+    }
+
+    function enrichLocalItem(item, id=item.id || `local-${Date.now()}`){
+      const galaxy = item.galaxy || classifyLocalGalaxy(item);
+      const meta = galaxyMeta[galaxy] || galaxyMeta.nameless;
+      const angle = seededNumber(id, 1) * Math.PI * 2;
+      const radius = 120 + seededNumber(id, 2) * 380;
+      return {
+        ...item,
+        id,
+        galaxy,
+        galaxyName: meta.name,
+        visual: item.visual || {
+          x: Math.round(meta.anchor.x + Math.cos(angle) * radius),
+          y: Math.round(meta.anchor.y + Math.sin(angle) * radius),
+          size: Math.round(104 + seededNumber(id, 3) * 58),
+          driftRadius: Math.round(26 + seededNumber(id, 4) * 76),
+          driftSpeed: +(0.000035 + seededNumber(id, 5) * 0.00006).toFixed(7),
+          orbitPhase: +(seededNumber(id, 6) * Math.PI * 2).toFixed(4),
+          rotationSpeed: +(0.003 + seededNumber(id, 7) * 0.012).toFixed(4),
+          wobble: +(0.2 + seededNumber(id, 8) * 0.8).toFixed(3),
+          color: meta.color,
+          galaxy,
+          constellationId: `${galaxy}-${Math.floor(seededNumber(id, 9) * 4) + 1}`
+        }
+      };
+    }
+    let archive = [...samples.map((item, index) => enrichLocalItem(item, `sample-${index + 1}`))];
+    const spaceNodes = new Map();
+    let motionFrame = 0;
+    let eventSource = null;
+    const localArchiveKey = 'release-simulator-items-v1';
+
+    function readLocalArchive(){
+      try{
+        const stored = JSON.parse(localStorage.getItem(localArchiveKey) || '[]');
+        return Array.isArray(stored) ? stored.map(item => enrichLocalItem(item, item.id)) : [];
+      }catch(_){
+        return [];
+      }
+    }
+
+    function writeLocalArchive(items){
+      try{
+        localStorage.setItem(localArchiveKey, JSON.stringify(items.filter(item => !item.seed && !String(item.id || '').startsWith('sample-'))));
+      }catch(_){}
+    }
+
+    function useLocalArchive(){
+      const localItems = readLocalArchive();
+      archive = [
+        ...samples.map((item, index) => enrichLocalItem(item, `sample-${index + 1}`)),
+        ...localItems
+      ];
+      state.itemsLoaded = true;
+      renderUniverse();
+    }
+
+    function navigate(page){
+      state.page = page;
+      $$('.page').forEach(p => p.classList.toggle('active', p.id === page));
+      $$('.nav button[data-page]').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+      if(page === 'universe') {
+        loadArchive();
+        renderUniverse();
+      }
+    }
+
+    $$('[data-page]').forEach(btn => btn.addEventListener('click', () => navigate(btn.dataset.page)));
+
+    function showToast(text){
+      const toast = $('#toast');
+      toast.textContent = text;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1800);
+    }
+
+    async function loadArchive(){
+      try{
+        const res = await fetch('/api/items', { cache:'no-store' });
+        if(!res.ok) throw new Error('API unavailable');
+        const data = await res.json();
+        archive = (data.items || []).map(item => enrichLocalItem(item, item.id));
+        state.itemsLoaded = true;
+        renderUniverse();
+      }catch(_){
+        useLocalArchive();
+      }
+    }
+
+    function connectRealtime(){
+      if(location.hostname.endsWith('github.io')) return;
+      if(eventSource || typeof EventSource === 'undefined') return;
+      try{
+        eventSource = new EventSource('/api/events');
+        eventSource.addEventListener('item', event => {
+          const incoming = enrichLocalItem(JSON.parse(event.data));
+          if(!archive.some(item => item.id === incoming.id)){
+            archive.push(incoming);
+            renderUniverse();
+            if(state.page === 'universe' && state.filter === 'all') showToast(`${incoming.galaxyName} received a new object`);
+          }
+        });
+        eventSource.onerror = () => {};
+      }catch(_){}
+    }
+
+    function svgFor(variant='object'){
+      const common = 'fill="none" stroke="#f6f3ea" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"';
+      const sketch = {
+        cup:`<svg viewBox="0 0 160 160" aria-hidden="true"><path ${common} d="M45 49c25-6 48-6 71 0-3 25-7 49-15 70-14 7-31 7-45 0-8-22-12-45-11-70Z"/><path ${common} d="M114 64c18-1 23 8 19 22-4 13-15 17-27 13"/><path ${common} d="M49 50c21 9 43 8 64 0M58 118c12 5 25 5 38 0"/><path ${common} opacity=".55" d="M69 38c-5-7 8-10 2-18M88 37c-4-8 9-10 4-20"/></svg>`,
+        toy:`<svg viewBox="0 0 160 160" aria-hidden="true"><path ${common} d="M52 56c-16-16-5-34 12-26 8 4 10 12 10 20M106 56c14-17 33-7 24 12-4 8-12 10-22 9"/><path ${common} d="M42 89c-1-33 24-49 48-42 25 7 37 32 27 62-8 26-37 36-58 22-12-8-17-22-17-42Z"/><path ${common} d="M68 79h1M95 80h1M72 103c9 7 18 7 26 0"/><path ${common} opacity=".55" d="M40 107c-13 6-14 20 0 22M119 105c15 6 15 20 1 23"/></svg>`,
+        headphones:`<svg viewBox="0 0 160 160" aria-hidden="true"><path ${common} d="M36 91c-2-39 17-65 44-65s46 26 44 65"/><path ${common} d="M33 88c-9 4-12 14-9 28 3 15 10 22 22 21 7-11 7-36-1-49-4-2-8-2-12 0ZM127 88c9 4 12 14 9 28-3 15-10 22-22 21-7-11-7-36 1-49 4-2 8-2 12 0Z"/><path ${common} opacity=".55" d="M55 36c16-13 36-13 51 1M58 129c12 8 31 8 45 0"/></svg>`,
+        book:`<svg viewBox="0 0 160 160" aria-hidden="true"><path ${common} d="M35 39c23-9 43-7 60 7v82c-18-13-38-15-60-7V39Z"/><path ${common} d="M95 46c14-12 32-13 52-6v82c-20-7-38-6-52 6"/><path ${common} opacity=".55" d="M49 57c11-2 22-1 32 4M49 75c10-2 20-1 30 3M111 59c8-4 16-5 25-3M111 77c9-4 18-5 27-2"/></svg>`,
+        ring:`<svg viewBox="0 0 160 160" aria-hidden="true"><path ${common} d="M49 87c0-26 17-45 39-45s38 19 38 45-16 45-38 45-39-19-39-45Z"/><path ${common} d="M64 86c0-16 10-28 24-28s23 12 23 28-9 28-23 28-24-12-24-28Z"/><path ${common} opacity=".55" d="M72 43l10-17 14 1 9 17M80 27l8 17 8-17"/></svg>`,
+        object:`<svg viewBox="0 0 160 160" aria-hidden="true"><path ${common} d="M48 50c18-17 54-19 72 2 13 15 11 48-5 63-18 17-55 19-73-1-15-17-10-49 6-64Z"/><path ${common} opacity=".6" d="M56 63c16-9 38-10 55 1M51 93c22 11 48 11 70-1M68 42c7-16 26-16 34 0"/></svg>`
+      };
+      return sketch[variant] || sketch.object;
+    }
+
+    const uploadStatus = $('#uploadStatus');
+    const generatedPreview = $('#generatedPreview');
+    const ritualObject = $('#ritualObject');
+    const drawCanvas = $('#drawCanvas');
+    const drawCtx = drawCanvas.getContext('2d', { willReadFrequently:true });
+    const drawHint = $('#drawHint');
+    const drawState = {
+      drawing:false,
+      tool:'pen',
+      brush:9,
+      color:'#050505',
+      strokes:[],
+      current:null,
+      dirty:false
+    };
+
+    function resizeDrawCanvas(){
+      const rect = $('#drawZone').getBoundingClientRect();
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      const snapshot = drawState.dirty ? drawCanvas.toDataURL('image/png') : null;
+      drawCanvas.width = Math.round(rect.width * dpr);
+      drawCanvas.height = Math.round(rect.height * dpr);
+      drawCtx.setTransform(dpr,0,0,dpr,0,0);
+      drawCtx.fillStyle = '#fff';
+      drawCtx.fillRect(0,0,rect.width,rect.height);
+      if(snapshot){
+        const img = new Image();
+        img.onload = () => drawCtx.drawImage(img,0,0,rect.width,rect.height);
+        img.src = snapshot;
+      }else{
+        seedDrawingPrompt(rect.width, rect.height);
+      }
+    }
+
+    function seedDrawingPrompt(w,h){
+      drawCtx.save();
+      drawCtx.strokeStyle = 'rgba(0,0,0,.08)';
+      drawCtx.lineWidth = 1;
+      drawCtx.setLineDash([5,9]);
+      drawCtx.beginPath();
+      drawCtx.ellipse(w/2,h/2,w*.22,h*.24,-.08,0,Math.PI*2);
+      drawCtx.stroke();
+      drawCtx.restore();
+    }
+
+    function canvasPoint(e){
+      const rect = drawCanvas.getBoundingClientRect();
+      return { x:e.clientX - rect.left, y:e.clientY - rect.top };
+    }
+
+    function beginStroke(e){
+      e.preventDefault();
+      drawState.drawing = true;
+      drawState.current = { tool:drawState.tool, brush:drawState.brush, color:drawState.color, points:[canvasPoint(e)] };
+      drawCanvas.setPointerCapture(e.pointerId);
+      drawHint.style.display = 'none';
+      drawState.dirty = true;
+      drawStrokeSegment(drawState.current.points[0], drawState.current.points[0], drawState.current);
+    }
+
+    function moveStroke(e){
+      if(!drawState.drawing || !drawState.current) return;
+      const pt = canvasPoint(e);
+      const points = drawState.current.points;
+      drawStrokeSegment(points[points.length-1], pt, drawState.current);
+      points.push(pt);
+    }
+
+    function endStroke(e){
+      if(!drawState.drawing) return;
+      drawState.drawing = false;
+      if(drawState.current && drawState.current.points.length){
+        drawState.strokes.push(drawState.current);
+        drawState.current = null;
+      }
+      try{ drawCanvas.releasePointerCapture(e.pointerId); }catch(_){}
+      uploadStatus.textContent = 'Drawing ready. Make it drift when you are done.';
+    }
+
+    function drawStrokeSegment(a,b,stroke){
+      drawCtx.save();
+      drawCtx.lineCap = 'round';
+      drawCtx.lineJoin = 'round';
+      drawCtx.lineWidth = stroke.brush;
+      if(stroke.tool === 'eraser'){
+        drawCtx.globalCompositeOperation = 'source-over';
+        drawCtx.strokeStyle = '#fff';
+      }else{
+        drawCtx.globalCompositeOperation = 'source-over';
+        drawCtx.strokeStyle = stroke.color || '#050505';
+      }
+      drawCtx.beginPath();
+      drawCtx.moveTo(a.x,a.y);
+      drawCtx.quadraticCurveTo((a.x+b.x)/2 + (Math.random()-.5)*.35, (a.y+b.y)/2 + (Math.random()-.5)*.35, b.x, b.y);
+      drawCtx.stroke();
+      drawCtx.restore();
+    }
+
+    function redrawAll(){
+      const rect = drawCanvas.getBoundingClientRect();
+      drawCtx.fillStyle = '#fff';
+      drawCtx.fillRect(0,0,rect.width,rect.height);
+      drawState.strokes.forEach(stroke => {
+        for(let i=1;i<stroke.points.length;i++) drawStrokeSegment(stroke.points[i-1], stroke.points[i], stroke);
+      });
+      drawHint.style.display = drawState.strokes.length ? 'none' : 'block';
+      if(!drawState.strokes.length) seedDrawingPrompt(rect.width, rect.height);
+      drawState.dirty = drawState.strokes.length > 0;
+    }
+
+    drawCanvas.addEventListener('pointerdown', beginStroke);
+    drawCanvas.addEventListener('pointermove', moveStroke);
+    drawCanvas.addEventListener('pointerup', endStroke);
+    drawCanvas.addEventListener('pointercancel', endStroke);
+    $('#brushSize').addEventListener('input', e => drawState.brush = Number(e.target.value));
+    $$('.color-dot').forEach(dot => {
+      dot.addEventListener('click', () => {
+        drawState.color = dot.dataset.color;
+        drawState.tool = 'pen';
+        $$('.color-dot').forEach(d => d.classList.toggle('active', d === dot));
+        $('#penTool').classList.add('active');
+        $('#eraserTool').classList.remove('active');
+      });
+    });
+    $('#penTool').addEventListener('click', () => {
+      drawState.tool = 'pen';
+      $('#penTool').classList.add('active');
+      $('#eraserTool').classList.remove('active');
+    });
+    $('#eraserTool').addEventListener('click', () => {
+      drawState.tool = 'eraser';
+      $('#eraserTool').classList.add('active');
+      $('#penTool').classList.remove('active');
+    });
+    $('#undoDraw').addEventListener('click', () => {
+      drawState.strokes.pop();
+      redrawAll();
+      uploadStatus.textContent = drawState.strokes.length ? 'Last stroke removed.' : 'Canvas is empty.';
+    });
+    $('#clearDraw').addEventListener('click', () => {
+      drawState.strokes = [];
+      redrawAll();
+      uploadStatus.textContent = 'Canvas cleared.';
+    });
+    $('#flipDraw').addEventListener('click', () => {
+      const rect = drawCanvas.getBoundingClientRect();
+      drawState.strokes.forEach(stroke => stroke.points.forEach(p => p.x = rect.width - p.x));
+      redrawAll();
+      uploadStatus.textContent = 'Drawing flipped.';
+    });
+
+    $('#generateBtn').addEventListener('click', () => {
+      if(!hasUserDrawing()){
+        state.generatedKind = 'svg';
+        state.generatedDataUrl = null;
+        placeGenerated(svgFor('object'), 'svg');
+        uploadStatus.textContent = 'Prototype fallback generated. Draw something for a personal object.';
+        showToast('Fallback object generated');
+        navigate('ritual');
+        return;
+      }
+      uploadStatus.textContent = 'Lifting the drawing from the paper...';
+      const dataUrl = exportDrawingObject();
+      state.generatedDataUrl = dataUrl;
+      state.generatedKind = 'image';
+      placeGenerated(dataUrl, 'image');
+      uploadStatus.textContent = 'Drawing converted to a floating object.';
+      showToast('Drawing released');
+      setTimeout(() => navigate('ritual'), 360);
+    });
+
+    function hasUserDrawing(){
+      return drawState.strokes.some(stroke => stroke.tool === 'pen' && stroke.points.length > 1);
+    }
+
+    function exportDrawingObject(){
+      const outSize = 620;
+      const penPoints = [];
+      drawState.strokes.forEach(stroke => {
+        if(stroke.tool === 'pen') stroke.points.forEach(p => penPoints.push(p));
+      });
+      const rect = drawCanvas.getBoundingClientRect();
+      let minX = rect.width, minY = rect.height, maxX = 0, maxY = 0;
+      penPoints.forEach(p => {
+        minX = Math.min(minX, p.x);
+        minY = Math.min(minY, p.y);
+        maxX = Math.max(maxX, p.x);
+        maxY = Math.max(maxY, p.y);
+      });
+      const pad = 34;
+      minX = Math.max(0, minX - pad);
+      minY = Math.max(0, minY - pad);
+      maxX = Math.min(rect.width, maxX + pad);
+      maxY = Math.min(rect.height, maxY + pad);
+      const bw = Math.max(1, maxX - minX);
+      const bh = Math.max(1, maxY - minY);
+      const sc = Math.min(outSize*.78/bw, outSize*.78/bh);
+      const ox = (outSize - bw*sc)/2;
+      const oy = (outSize - bh*sc)/2;
+      const out = document.createElement('canvas');
+      out.width = outSize;
+      out.height = outSize;
+      const ctx = out.getContext('2d');
+      drawState.strokes.forEach(stroke => {
+        if(stroke.points.length < 2) return;
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = Math.max(3.2, stroke.brush * sc * .92);
+        ctx.strokeStyle = universeStrokeColor(stroke.color || '#050505');
+        ctx.globalCompositeOperation = stroke.tool === 'eraser' ? 'destination-out' : 'source-over';
+        ctx.beginPath();
+        const first = stroke.points[0];
+        ctx.moveTo(ox + (first.x-minX)*sc, oy + (first.y-minY)*sc);
+        for(let i=1;i<stroke.points.length;i++){
+          const prev = stroke.points[i-1];
+          const cur = stroke.points[i];
+          const mx = (prev.x + cur.x) / 2;
+          const my = (prev.y + cur.y) / 2;
+          ctx.quadraticCurveTo(ox + (prev.x-minX)*sc, oy + (prev.y-minY)*sc, ox + (mx-minX)*sc, oy + (my-minY)*sc);
+        }
+        ctx.stroke();
+        if(stroke.tool === 'pen'){
+          ctx.globalAlpha = .22;
+          ctx.lineWidth = Math.max(1.4, stroke.brush * sc * .32);
+          ctx.translate(.9,-.7);
+          ctx.stroke();
+        }
+        ctx.restore();
+      });
+      return out.toDataURL('image/png');
+    }
+
+    function universeStrokeColor(color){
+      const normalized = (color || '').toLowerCase();
+      const map = {
+        '#050505':'#f6f3ea',
+        '#e94b35':'#ff6b57',
+        '#1f67d2':'#65a6ff',
+        '#17985a':'#53d18a',
+        '#f0b429':'#ffd166',
+        '#8c5ad8':'#c5a3ff'
+      };
+      return map[normalized] || color || '#f6f3ea';
+    }
+
+    function placeGenerated(content, kind){
+      generatedPreview.innerHTML = '';
+      ritualObject.innerHTML = '';
+      if(kind === 'image'){
+        const imgA = document.createElement('img');
+        imgA.src = content;
+        imgA.alt = 'Generated colored hand-drawn object';
+        generatedPreview.appendChild(imgA);
+        const imgB = imgA.cloneNode();
+        ritualObject.appendChild(imgB);
+      }else{
+        generatedPreview.innerHTML = content;
+        ritualObject.innerHTML = content;
+      }
+    }
+
+    function generateTrace(img){
+      const srcSize = 460;
+      const outSize = 620;
+      const src = document.createElement('canvas');
+      src.width = srcSize; src.height = srcSize;
+      const sctx = src.getContext('2d', { willReadFrequently:true });
+      sctx.fillStyle = '#f7f6f2';
+      sctx.fillRect(0,0,srcSize,srcSize);
+      const scale = Math.min((srcSize*.86)/img.width, (srcSize*.86)/img.height);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      const x = (srcSize-w)/2;
+      const y = (srcSize-h)/2;
+      sctx.drawImage(img, x, y, w, h);
+      const image = sctx.getImageData(0,0,srcSize,srcSize);
+      let mask = isolateSubjectMask(image, srcSize, srcSize);
+      mask = cleanMask(mask, srcSize, srcSize);
+      const box = subjectBox(mask, srcSize, srcSize) || { minX:x, minY:y, maxX:x+w, maxY:y+h };
+      return drawDoodle(image, mask, srcSize, srcSize, box, outSize);
+    }
+
+    function isolateSubjectMask(image, width, height){
+      const data = image.data;
+      const bg = estimateBorderBackground(data, width, height);
+      const bgMap = new Uint8Array(width*height);
+      const stack = [];
+      const push = (x,y) => {
+        if(x<0 || y<0 || x>=width || y>=height) return;
+        const i = y*width+x;
+        if(bgMap[i]) return;
+        bgMap[i] = 1;
+        stack.push(i);
+      };
+      for(let x=0;x<width;x+=2){ push(x,0); push(x,height-1); }
+      for(let y=0;y<height;y+=2){ push(0,y); push(width-1,y); }
+      while(stack.length){
+        const i = stack.pop();
+        const x = i % width;
+        const y = (i / width) | 0;
+        const ns = [[x+1,y],[x-1,y],[x,y+1],[x,y-1]];
+        for(const [nx,ny] of ns){
+          if(nx<0 || ny<0 || nx>=width || ny>=height) continue;
+          const ni = ny*width+nx;
+          if(bgMap[ni]) continue;
+          if(isBackgroundPixel(data, ni, bg)){
+            bgMap[ni] = 1;
+            stack.push(ni);
+          }
+        }
+      }
+      let mask = new Uint8Array(width*height);
+      let count = 0;
+      for(let i=0;i<mask.length;i++){
+        if(!bgMap[i]){
+          const p = i*4;
+          const diff = rgbDistance(data[p],data[p+1],data[p+2], bg.r,bg.g,bg.b);
+          if(diff > 26){ mask[i] = 1; count++; }
+        }
+      }
+      if(count < width*height*.018 || count > width*height*.72){
+        mask = saliencyMask(data, width, height, bg);
+      }
+      return keepLargestComponent(mask, width, height);
+    }
+
+    function estimateBorderBackground(data, width, height){
+      const samples = [];
+      const add = (x,y) => {
+        const p = (y*width+x)*4;
+        samples.push([data[p],data[p+1],data[p+2]]);
+      };
+      for(let x=0;x<width;x+=5){ add(x,0); add(x,height-1); }
+      for(let y=0;y<height;y+=5){ add(0,y); add(width-1,y); }
+      const avg = samples.reduce((a,c) => [a[0]+c[0],a[1]+c[1],a[2]+c[2]], [0,0,0]).map(v => v/samples.length);
+      const spread = Math.sqrt(samples.reduce((sum,c) => sum + rgbDistance(c[0],c[1],c[2],avg[0],avg[1],avg[2])**2,0) / samples.length);
+      return { r:avg[0], g:avg[1], b:avg[2], spread };
+    }
+
+    function isBackgroundPixel(data, i, bg){
+      const p = i*4;
+      const r = data[p], g = data[p+1], b = data[p+2];
+      const d = rgbDistance(r,g,b,bg.r,bg.g,bg.b);
+      const max = Math.max(r,g,b), min = Math.min(r,g,b);
+      const sat = max - min;
+      const bright = (r+g+b)/3;
+      const paperLike = bright > 204 && sat < 38;
+      const darkPaper = bright < 42 && sat < 30 && (bg.r+bg.g+bg.b)/3 < 70;
+      return d < Math.max(42, bg.spread*1.55 + 20) || paperLike || darkPaper;
+    }
+
+    function saliencyMask(data, width, height, bg){
+      const mask = new Uint8Array(width*height);
+      for(let y=0;y<height;y++){
+        for(let x=0;x<width;x++){
+          const i = y*width+x;
+          const p = i*4;
+          const d = rgbDistance(data[p],data[p+1],data[p+2],bg.r,bg.g,bg.b);
+          const cx = (x/width-.5), cy = (y/height-.5);
+          const centerBoost = 1 - Math.min(1, Math.sqrt(cx*cx+cy*cy)*1.35);
+          if(d + centerBoost*34 > Math.max(58, bg.spread*1.2 + 38)) mask[i] = 1;
+        }
+      }
+      return mask;
+    }
+
+    function cleanMask(mask, width, height){
+      let a = dilate(mask,width,height,2);
+      a = erode(a,width,height,2);
+      a = fillSmallHoles(a,width,height);
+      a = erode(a,width,height,1);
+      a = dilate(a,width,height,1);
+      return a;
+    }
+
+    function dilate(mask,w,h,passes){
+      let cur = mask;
+      for(let k=0;k<passes;k++){
+        const next = new Uint8Array(w*h);
+        for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){
+          const i=y*w+x;
+          if(cur[i]||cur[i-1]||cur[i+1]||cur[i-w]||cur[i+w]||cur[i-w-1]||cur[i-w+1]||cur[i+w-1]||cur[i+w+1]) next[i]=1;
+        }
+        cur = next;
+      }
+      return cur;
+    }
+
+    function erode(mask,w,h,passes){
+      let cur = mask;
+      for(let k=0;k<passes;k++){
+        const next = new Uint8Array(w*h);
+        for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){
+          const i=y*w+x;
+          if(cur[i]&&cur[i-1]&&cur[i+1]&&cur[i-w]&&cur[i+w]) next[i]=1;
+        }
+        cur = next;
+      }
+      return cur;
+    }
+
+    function fillSmallHoles(mask,w,h){
+      const seen = new Uint8Array(w*h);
+      const q = [];
+      const push = (x,y) => {
+        if(x<0||y<0||x>=w||y>=h) return;
+        const i=y*w+x;
+        if(seen[i]||mask[i]) return;
+        seen[i]=1; q.push(i);
+      };
+      for(let x=0;x<w;x++){ push(x,0); push(x,h-1); }
+      for(let y=0;y<h;y++){ push(0,y); push(w-1,y); }
+      for(let p=0;p<q.length;p++){
+        const i=q[p], x=i%w, y=(i/w)|0;
+        push(x+1,y); push(x-1,y); push(x,y+1); push(x,y-1);
+      }
+      const out = mask.slice();
+      for(let i=0;i<out.length;i++) if(!mask[i]&&!seen[i]) out[i]=1;
+      return out;
+    }
+
+    function keepLargestComponent(mask,w,h){
+      const seen = new Uint8Array(w*h);
+      let best = [];
+      for(let i=0;i<mask.length;i++){
+        if(!mask[i] || seen[i]) continue;
+        const comp = [];
+        const q = [i];
+        seen[i]=1;
+        for(let p=0;p<q.length;p++){
+          const cur=q[p], x=cur%w, y=(cur/w)|0;
+          comp.push(cur);
+          const ns=[cur-1,cur+1,cur-w,cur+w];
+          for(const ni of ns){
+            if(ni<0||ni>=mask.length||seen[ni]||!mask[ni]) continue;
+            const nx=ni%w, ny=(ni/w)|0;
+            if(Math.abs(nx-x)+Math.abs(ny-y)!==1) continue;
+            seen[ni]=1; q.push(ni);
+          }
+        }
+        if(comp.length > best.length) best = comp;
+      }
+      const out = new Uint8Array(w*h);
+      best.forEach(i => out[i]=1);
+      return out;
+    }
+
+    function subjectBox(mask,w,h){
+      let minX=w,minY=h,maxX=-1,maxY=-1,count=0;
+      for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+        if(mask[y*w+x]){
+          count++;
+          minX=Math.min(minX,x); minY=Math.min(minY,y);
+          maxX=Math.max(maxX,x); maxY=Math.max(maxY,y);
+        }
+      }
+      if(!count) return null;
+      const pad = Math.max(14, Math.round(Math.max(maxX-minX,maxY-minY)*.13));
+      return { minX:Math.max(0,minX-pad), minY:Math.max(0,minY-pad), maxX:Math.min(w-1,maxX+pad), maxY:Math.min(h-1,maxY+pad) };
+    }
+
+    function drawDoodle(image, mask, w, h, box, outSize){
+      const data = image.data;
+      const out = document.createElement('canvas');
+      out.width = outSize; out.height = outSize;
+      const ctx = out.getContext('2d');
+      const bw = box.maxX-box.minX+1;
+      const bh = box.maxY-box.minY+1;
+      const sc = Math.min(outSize*.74/bw, outSize*.74/bh);
+      const ox = (outSize - bw*sc)/2;
+      const oy = (outSize - bh*sc)/2;
+      const gray = new Uint8ClampedArray(w*h);
+      for(let i=0,j=0;i<data.length;i+=4,j++) gray[j] = data[i]*.299 + data[i+1]*.587 + data[i+2]*.114;
+      const boundary = [];
+      const inner = [];
+      for(let y=Math.max(1,box.minY); y<Math.min(h-1,box.maxY); y++){
+        for(let x=Math.max(1,box.minX); x<Math.min(w-1,box.maxX); x++){
+          const i = y*w+x;
+          if(!mask[i]) continue;
+          const edge = !mask[i-1] || !mask[i+1] || !mask[i-w] || !mask[i+w];
+          if(edge){
+            if((x+y)%2===0) boundary.push([x,y]);
+          }else if((x+y)%5===0){
+            const gx = -gray[i-w-1] - 2*gray[i-1] - gray[i+w-1] + gray[i-w+1] + 2*gray[i+1] + gray[i+w+1];
+            const gy = -gray[i-w-1] - 2*gray[i-w] - gray[i-w+1] + gray[i+w-1] + 2*gray[i+w] + gray[i+w+1];
+            if(Math.sqrt(gx*gx+gy*gy) > 82) inner.push([x,y]);
+          }
+        }
+      }
+      ctx.strokeStyle = '#f6f3ea';
+      ctx.fillStyle = '#f6f3ea';
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      drawPointStrokes(ctx, boundary, box, sc, ox, oy, 4.5, 5.5, 3600);
+      drawPointStrokes(ctx, boundary.filter((_,i)=>i%4===0), box, sc, ox, oy, 2.1, 7.5, 1200, .55);
+      drawPointStrokes(ctx, inner, box, sc, ox, oy, 2.4, 6, 900, .58);
+      addMinimalDoodleDetails(ctx, boundary, box, sc, ox, oy, outSize);
+      softenCanvas(out, .22);
+      return out.toDataURL('image/png');
+    }
+
+    function drawPointStrokes(ctx, points, box, sc, ox, oy, lineWidth, len, maxPoints, alpha=1){
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = lineWidth;
+      const step = Math.max(1, Math.ceil(points.length / maxPoints));
+      for(let i=0;i<points.length;i+=step){
+        const [x,y] = points[i];
+        const px = ox + (x-box.minX)*sc + (Math.random()-.5)*1.6;
+        const py = oy + (y-box.minY)*sc + (Math.random()-.5)*1.6;
+        const a = Math.random()*Math.PI*2;
+        const l = (len + Math.random()*len) * sc*.32;
+        ctx.beginPath();
+        ctx.moveTo(px - Math.cos(a)*l*.5, py - Math.sin(a)*l*.5);
+        ctx.quadraticCurveTo(px + (Math.random()-.5)*3, py + (Math.random()-.5)*3, px + Math.cos(a)*l*.5, py + Math.sin(a)*l*.5);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function addMinimalDoodleDetails(ctx, boundary, box, sc, ox, oy, outSize){
+      if(boundary.length < 80) return;
+      ctx.save();
+      ctx.globalAlpha = .5;
+      ctx.lineWidth = 2.2;
+      for(let i=0;i<Math.min(14,boundary.length);i++){
+        const [x,y] = boundary[(i*97) % boundary.length];
+        const px = ox + (x-box.minX)*sc;
+        const py = oy + (y-box.minY)*sc;
+        const l = outSize * (.014 + Math.random()*.018);
+        ctx.beginPath();
+        ctx.moveTo(px-l*.5, py + (Math.random()-.5)*5);
+        ctx.quadraticCurveTo(px, py + (Math.random()-.5)*8, px+l*.5, py + (Math.random()-.5)*5);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function softenCanvas(canvas, amount=.35){
+      const ctx = canvas.getContext('2d');
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.filter = `blur(${amount}px)`;
+      const copy = document.createElement('canvas');
+      copy.width = canvas.width; copy.height = canvas.height;
+      copy.getContext('2d').drawImage(canvas,0,0);
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(copy,0,0);
+      ctx.filter = 'none';
+    }
+
+    function rgbDistance(r1,g1,b1,r2,g2,b2){
+      const dr=r1-r2,dg=g1-g2,db=b1-b2;
+      return Math.sqrt(dr*dr+dg*dg+db*db);
+    }
+ 
+    const releaseButton = $('#holdRelease');
+    const releaseProgress = $('#releaseProgress');
+    const holdNote = $('#holdNote');
+    const releaseHold = {
+      active:false,
+      complete:false,
+      startedAt:0,
+      frame:0,
+      duration:1350
+    };
+
+    $('#ritualForm').addEventListener('submit', e => {
+      e.preventDefault();
+      showToast('Hold the release button');
+    });
+
+    releaseButton.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      if(releaseHold.complete) return;
+      releaseHold.active = true;
+      releaseHold.startedAt = performance.now();
+      releaseButton.setPointerCapture(e.pointerId);
+      holdNote.textContent = '继续按住，直到进度蓄满。';
+      tickReleaseHold();
+    });
+    releaseButton.addEventListener('pointerup', cancelReleaseHold);
+    releaseButton.addEventListener('pointercancel', cancelReleaseHold);
+    releaseButton.addEventListener('pointerleave', cancelReleaseHold);
+
+    function cancelReleaseHold(e){
+      if(!releaseHold.active || releaseHold.complete) return;
+      releaseHold.active = false;
+      cancelAnimationFrame(releaseHold.frame);
+      releaseProgress.style.width = '0%';
+      holdNote.textContent = '长按按钮，进度蓄满后将物品发射到宇宙空间。';
+      try{ releaseButton.releasePointerCapture(e.pointerId); }catch(_){}
+    }
+
+    function tickReleaseHold(){
+      if(!releaseHold.active || releaseHold.complete) return;
+      const elapsed = performance.now() - releaseHold.startedAt;
+      const progress = Math.min(1, elapsed / releaseHold.duration);
+      releaseProgress.style.width = (progress * 100).toFixed(1) + '%';
+      if(progress >= 1){
+        releaseHold.complete = true;
+        releaseHold.active = false;
+        completeRelease();
+        return;
+      }
+      releaseHold.frame = requestAnimationFrame(tickReleaseHold);
+    }
+
+    function completeRelease(){
+      releaseButton.disabled = true;
+      releaseButton.style.opacity = '.58';
+      holdNote.textContent = '发射中。';
+      ritualObject.classList.add('launching');
+      setTimeout(async () => {
+        const newItem = await saveReleasedItem(createReleasedItem());
+        if(!archive.some(item => item.id === newItem.id)) archive.push(newItem);
+        state.userItemId = newItem.id;
+        state.lastReleasedItemId = newItem.id;
+        state.filter = 'mine';
+        shell.classList.add('released-mode');
+        setFilterButtons();
+        renderUniverse();
+        showToast('Released into archive');
+        navigate('universe');
+        requestAnimationFrame(() => requestAnimationFrame(() => focusItem(newItem)));
+        setTimeout(() => {
+          ritualObject.classList.remove('launching');
+          releaseHold.complete = false;
+          releaseButton.disabled = false;
+          releaseButton.style.opacity = '';
+          releaseProgress.style.width = '0%';
+          holdNote.textContent = '长按按钮，进度蓄满后将物品发射到宇宙空间。';
+        }, 800);
+      }, 760);
+    }
+
+    async function saveReleasedItem(draft){
+      try{
+        const res = await fetch('/api/items', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
+          body:JSON.stringify(draft)
+        });
+        if(!res.ok) throw new Error('Save failed');
+        const data = await res.json();
+        return enrichLocalItem({ ...data.item, mine:true }, data.item.id);
+      }catch(_){
+        const item = enrichLocalItem({ ...draft, id:'mine-' + Date.now(), mine:true });
+        writeLocalArchive([...readLocalArchive(), item]);
+        return item;
+      }
+    }
+
+    function createReleasedItem(){
+      return {
+        mine:true,
+        name:$('#itemName').value.trim() || 'Unnamed object',
+        city:'Somewhere',
+        date:new Date().toISOString().slice(0,10),
+        kept:$('#keptReason').value.trim() || 'It stayed because memory made it heavier than its use.',
+        reason:$('#letGoReason').value.trim() || 'It can continue without being owned.',
+        note:$('#farewellNote').value.trim() || 'Go lightly.',
+        x:1880,
+        y:1260,
+        size:150,
+        dataUrl:state.generatedDataUrl,
+        variant:state.generatedDataUrl ? null : 'object'
+      };
+    }
+
+    const shell = $('#universeShell');
+    const spaceCanvas = $('#spaceCanvas');
+    const infoCard = $('#infoCard');
+    const constellationLayer = $('#constellationLayer');
+    const constellationCtx = constellationLayer.getContext('2d');
+
+    function renderUniverse(){
+      spaceCanvas.innerHTML = '';
+      spaceNodes.clear();
+      const visible = archive.filter(item => state.filter === 'all' || item.mine);
+      visible.forEach(item => {
+        item = enrichLocalItem(item, item.id);
+        const visual = item.visual;
+        const btn = document.createElement('button');
+        btn.className = 'space-object';
+        if(item.mine) btn.classList.add('mine');
+        if(item.id === state.lastReleasedItemId) btn.classList.add('just-released');
+        btn.style.left = visual.x + 'px';
+        btn.style.top = visual.y + 'px';
+        btn.style.width = visual.size + 'px';
+        btn.style.height = visual.size + 'px';
+        btn.style.setProperty('--dur', (10 + visual.wobble * 9).toFixed(1) + 's');
+        btn.style.setProperty('--r1', (-8 + Math.random()*8).toFixed(1) + 'deg');
+        btn.style.setProperty('--r2', (3 + Math.random()*9).toFixed(1) + 'deg');
+        btn.setAttribute('aria-label', item.name);
+        btn.title = `${item.galaxyName || ''} · ${item.name}`;
+        if(item.dataUrl){
+          const img = document.createElement('img');
+          img.src = item.dataUrl;
+          img.alt = '';
+          btn.appendChild(img);
+        }else{
+          btn.innerHTML = svgFor(item.variant);
+        }
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          showInfo(item);
+        });
+        spaceCanvas.appendChild(btn);
+        spaceNodes.set(item.id, { el:btn, item, x:visual.x, y:visual.y, screenX:visual.x, screenY:visual.y });
+      });
+      applySpaceTransform();
+      startSpaceMotion();
+    }
+
+    function startSpaceMotion(){
+      if(motionFrame) return;
+      const tick = (time) => {
+        updateSpaceMotion(time);
+        motionFrame = requestAnimationFrame(tick);
+      };
+      motionFrame = requestAnimationFrame(tick);
+    }
+
+    function updateSpaceMotion(time){
+      const visibleNodes = [];
+      spaceNodes.forEach(node => {
+        const v = node.item.visual || enrichLocalItem(node.item, node.item.id).visual;
+        const t = time * (v.driftSpeed || 0.00005) + (v.orbitPhase || 0);
+        const meeting = temporaryMeetingOffset(node.item, time);
+        const x = v.x + Math.cos(t) * v.driftRadius + Math.sin(t * .43) * v.driftRadius * .34 + meeting.x;
+        const y = v.y + Math.sin(t * 1.13) * v.driftRadius + Math.cos(t * .37) * v.driftRadius * .28 + meeting.y;
+        node.x = x;
+        node.y = y;
+        node.screenX = x + (v.size || 130) / 2;
+        node.screenY = y + (v.size || 130) / 2;
+        node.el.style.left = x.toFixed(2) + 'px';
+        node.el.style.top = y.toFixed(2) + 'px';
+        visibleNodes.push(node);
+      });
+      drawConstellations(visibleNodes, time);
+    }
+
+    function temporaryMeetingOffset(item, time){
+      const v = item.visual || {};
+      const group = v.constellationId || item.galaxy || 'nameless';
+      let h = 0;
+      for(let i=0;i<group.length;i++) h += group.charCodeAt(i) * (i + 1);
+      const cycle = Math.sin(time * 0.00008 + h);
+      const active = Math.max(0, cycle - .45) / .55;
+      if(!active) return { x:0, y:0 };
+      const center = galaxyMeta[item.galaxy || 'nameless']?.anchor || galaxyMeta.nameless.anchor;
+      return {
+        x:(center.x - v.x) * active * .12,
+        y:(center.y - v.y) * active * .12
+      };
+    }
+
+    function drawConstellations(nodes, time){
+      const rect = shell.getBoundingClientRect();
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      if(constellationLayer.width !== Math.round(rect.width * dpr) || constellationLayer.height !== Math.round(rect.height * dpr)){
+        constellationLayer.width = Math.round(rect.width * dpr);
+        constellationLayer.height = Math.round(rect.height * dpr);
+      }
+      constellationCtx.setTransform(dpr,0,0,dpr,0,0);
+      constellationCtx.clearRect(0,0,rect.width,rect.height);
+      constellationCtx.lineWidth = 1;
+      for(let i=0;i<nodes.length;i++){
+        for(let j=i+1;j<nodes.length;j++){
+          const a = nodes[i], b = nodes[j];
+          if((a.item.visual?.constellationId) !== (b.item.visual?.constellationId)) continue;
+          const ax = state.pan.x + a.screenX * state.scale;
+          const ay = state.pan.y + a.screenY * state.scale;
+          const bx = state.pan.x + b.screenX * state.scale;
+          const by = state.pan.y + b.screenY * state.scale;
+          const dist = Math.hypot(ax-bx, ay-by);
+          const pulse = (Math.sin(time * .0012 + i + j) + 1) / 2;
+          if(dist < 260 && pulse > .32){
+            constellationCtx.globalAlpha = Math.max(0, (1 - dist/260) * .42 * pulse);
+            constellationCtx.strokeStyle = a.item.visual?.color || 'rgba(255,255,255,.5)';
+            constellationCtx.beginPath();
+            constellationCtx.moveTo(ax, ay);
+            constellationCtx.lineTo(bx, by);
+            constellationCtx.stroke();
+          }
+        }
+      }
+      constellationCtx.globalAlpha = 1;
+    }
+
+    function setFilterButtons(){
+      $('#allToggle').classList.toggle('on', state.filter === 'all');
+      $('#myToggle').classList.toggle('on', state.filter === 'mine');
+    }
+
+    function showInfo(item){
+      infoCard.innerHTML = `
+        <div class="receipt-head">
+          <div class="receipt-title">Release Receipt</div>
+          <div class="receipt-sub">${item.mine ? 'my object' : 'anonymous object'}</div>
+        </div>
+        <div class="receipt-line"></div>
+        <h3 class="serif">${escapeHTML(item.name)}</h3>
+        <div class="receipt-line"></div>
+        <dl>
+          <div><dt>released at</dt><dd>${escapeHTML(item.date)} · ${escapeHTML(item.city)}</dd></div>
+          <div><dt>why it stayed</dt><dd>${escapeHTML(item.kept)}</dd></div>
+          <div><dt>why it leaves</dt><dd>${escapeHTML(item.reason)}</dd></div>
+          <div><dt>farewell note</dt><dd>${escapeHTML(item.note)}</dd></div>
+        </dl>
+        <div class="receipt-line"></div>
+        <div class="receipt-foot">####</div>
+      `;
+      infoCard.classList.add('show');
+    }
+
+    function escapeHTML(str){
+      return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+    }
+
+    function applySpaceTransform(){
+      spaceCanvas.style.transform = `translate(${state.pan.x}px, ${state.pan.y}px) scale(${state.scale})`;
+    }
+
+    function resetSpaceView(){
+      const rect = shell.getBoundingClientRect();
+      state.scale = Math.min(1, Math.max(.72, rect.width / 1900));
+      state.pan.x = rect.width/2 - 1800*state.scale;
+      state.pan.y = rect.height/2 - 1300*state.scale;
+      applySpaceTransform();
+    }
+
+    function focusItem(item){
+      if(state.filter === 'mine' && !item.mine) state.filter = 'all';
+      setFilterButtons();
+      renderUniverse();
+      const rect = shell.getBoundingClientRect();
+      state.scale = 1.18;
+      state.pan.x = rect.width/2 - (item.x + item.size/2)*state.scale;
+      state.pan.y = rect.height/2 - (item.y + item.size/2)*state.scale;
+      applySpaceTransform();
+      showInfo(item);
+    }
+
+    shell.addEventListener('pointerdown', e => {
+      if(e.target.closest('.space-controls') || e.target.closest('.info-card')) return;
+      state.dragging = true;
+      state.dragStart = { x:e.clientX, y:e.clientY };
+      state.panStart = { ...state.pan };
+      shell.setPointerCapture(e.pointerId);
+      infoCard.classList.remove('show');
+    });
+    shell.addEventListener('pointermove', e => {
+      if(!state.dragging) return;
+      state.pan.x = state.panStart.x + e.clientX - state.dragStart.x;
+      state.pan.y = state.panStart.y + e.clientY - state.dragStart.y;
+      applySpaceTransform();
+    });
+    shell.addEventListener('pointerup', e => {
+      state.dragging = false;
+      try{ shell.releasePointerCapture(e.pointerId); }catch(_){}
+    });
+    shell.addEventListener('wheel', e => {
+      e.preventDefault();
+      const rect = shell.getBoundingClientRect();
+      const old = state.scale;
+      const next = Math.min(2.2, Math.max(.42, old * (e.deltaY > 0 ? .92 : 1.08)));
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const wx = (mx - state.pan.x) / old;
+      const wy = (my - state.pan.y) / old;
+      state.scale = next;
+      state.pan.x = mx - wx * next;
+      state.pan.y = my - wy * next;
+      applySpaceTransform();
+    }, { passive:false });
+
+    $('#resetView').addEventListener('click', resetSpaceView);
+    $('#allToggle').addEventListener('click', () => {
+      state.filter = 'all';
+      shell.classList.remove('released-mode');
+      setFilterButtons();
+      infoCard.classList.remove('show');
+      renderUniverse();
+    });
+    $('#myToggle').addEventListener('click', () => {
+      state.filter = 'mine';
+      if(state.lastReleasedItemId) shell.classList.add('released-mode');
+      setFilterButtons();
+      infoCard.classList.remove('show');
+      renderUniverse();
+      const mine = archive.find(i => i.id === state.lastReleasedItemId) || archive.find(i => i.mine);
+      if(mine) requestAnimationFrame(() => focusItem(mine));
+      else showToast('No released object yet');
+    });
+    $('#findMine').addEventListener('click', () => {
+      const mine = archive.find(i => i.id === state.lastReleasedItemId) || archive.find(i => i.mine);
+      if(!mine){
+        showToast('No released object yet');
+        return;
+      }
+      state.filter = 'mine';
+      shell.classList.add('released-mode');
+      setFilterButtons();
+      focusItem(mine);
+    });
+
+    window.addEventListener('resize', () => {
+      resizeDrawCanvas();
+      if(state.page === 'universe') resetSpaceView();
+    });
+    resizeDrawCanvas();
+    resetSpaceView();
+    renderUniverse();
+  </script>
+</body>
+</html>
