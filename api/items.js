@@ -13,12 +13,14 @@ const ALLOWED_ORIGINS = new Set([
 
 function setCors(req, res) {
   const origin = req.headers.origin;
-  const vercelOrigins = [
+  const deploymentOrigins = [
     process.env.VERCEL_URL,
-    process.env.VERCEL_PROJECT_PRODUCTION_URL
-  ].filter(Boolean).map(host => `https://${host}`);
-  const ownVercelOrigin = typeof origin === 'string' && vercelOrigins.includes(origin);
-  const allowed = !origin || ALLOWED_ORIGINS.has(origin) || ownVercelOrigin;
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    process.env.URL,
+    process.env.DEPLOY_PRIME_URL
+  ].filter(Boolean).map(value => /^https?:\/\//.test(value) ? value : `https://${value}`);
+  const ownDeploymentOrigin = typeof origin === 'string' && deploymentOrigins.includes(origin);
+  const allowed = !origin || ALLOWED_ORIGINS.has(origin) || ownDeploymentOrigin;
   if (origin && allowed) res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');

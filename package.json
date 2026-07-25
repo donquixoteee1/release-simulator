@@ -5,6 +5,7 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
+    "build:netlify": "mkdir -p dist && cp index.html dist/index.html",
     "test": "node --test"
   }
 }

@@ -1,0 +1,23 @@
+[build]
+  command = "mkdir -p dist && cp index.html dist/index.html"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/items"
+  to = "/.netlify/functions/items"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/api/items"
+  [headers.values]
+    Cache-Control = "no-store"
