@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-api-base="https://release-simulator.vercel.app">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -1056,6 +1056,8 @@
   <script>
     const $ = (sel, root=document) => root.querySelector(sel);
     const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    const cloudApiBase = (document.documentElement.dataset.apiBase || '').replace(/\/$/, '');
+    const apiUrl = path => `${cloudApiBase}${path}`;
 
     const state = {
       page: 'home',
@@ -1164,8 +1166,9 @@
     let archive = [...samples.map((item, index) => enrichLocalItem(item, `sample-${index + 1}`))];
     const spaceNodes = new Map();
     let motionFrame = 0;
-    let eventSource = null;
+    let archiveRefreshTimer = 0;
     const localArchiveKey = 'release-simulator-items-v1';
+    const localMineKey = 'release-simulator-mine-v1';
 
     function readLocalArchive(){
       try{
@@ -1182,12 +1185,40 @@
       }catch(_){}
     }
 
+    function readMineIds(){
+      try{
+        const ids = JSON.parse(localStorage.getItem(localMineKey) || '[]');
+        return new Set(Array.isArray(ids) ? ids.map(String) : []);
+      }catch(_){
+        return new Set();
+      }
+    }
+
+    function rememberMine(id){
+      try{
+        const ids = readMineIds();
+        ids.add(String(id));
+        localStorage.setItem(localMineKey, JSON.stringify([...ids].slice(-500)));
+      }catch(_){}
+    }
+
+    function mergeArchiveItems(items){
+      const mineIds = readMineIds();
+      const merged = samples.map((item, index) => enrichLocalItem(item, `sample-${index + 1}`));
+      const seen = new Set(merged.map(item => item.id));
+      items.forEach(item => {
+        if(!item || !item.id || seen.has(item.id)) return;
+        seen.add(item.id);
+        merged.push(enrichLocalItem({
+          ...item,
+          mine:Boolean(item.mine || mineIds.has(String(item.id)) || String(item.id).startsWith('mine-'))
+        }, item.id));
+      });
+      return merged;
+    }
+
     function useLocalArchive(){
-      const localItems = readLocalArchive();
-      archive = [
-        ...samples.map((item, index) => enrichLocalItem(item, `sample-${index + 1}`)),
-        ...localItems
-      ];
+      archive = mergeArchiveItems(readLocalArchive());
       state.itemsLoaded = true;
       renderUniverse();
     }
@@ -1198,7 +1229,10 @@
       $$('.nav button[data-page]').forEach(b => b.classList.toggle('active', b.dataset.page === page));
       if(page === 'universe') {
         loadArchive();
+        startArchiveRefresh();
         renderUniverse();
+      }else{
+        stopArchiveRefresh();
       }
     }
 
@@ -1211,12 +1245,54 @@
       setTimeout(() => toast.classList.remove('show'), 1800);
     }
 
+    async function requestCloudItem(draft){
+      const res = await fetch(apiUrl('/api/items'), {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body:JSON.stringify(draft)
+      });
+      if(!res.ok){
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.error || 'Cloud save failed');
+      }
+      const data = await res.json();
+      if(!data.item?.id) throw new Error('Cloud save returned no item');
+      return data.item;
+    }
+
+    async function migrateLocalArchive(remoteItems){
+      const pending = readLocalArchive();
+      if(!pending.length) return [];
+      const migrated = [];
+      const attempted = new Set();
+      for(const item of pending.slice(0,6)){
+        try{
+          const saved = await requestCloudItem(item);
+          rememberMine(saved.id);
+          migrated.push({ ...saved, mine:true });
+          attempted.add(item.id);
+        }catch(_){
+          break;
+        }
+      }
+      if(attempted.size){
+        writeLocalArchive(pending.filter(item => !attempted.has(item.id)));
+      }
+      return migrated.filter(item => !remoteItems.some(remote => remote.id === item.id));
+    }
+
     async function loadArchive(){
       try{
-        const res = await fetch('/api/items', { cache:'no-store' });
+        const res = await fetch(apiUrl('/api/items'), { cache:'no-store' });
         if(!res.ok) throw new Error('API unavailable');
         const data = await res.json();
-        archive = (data.items || []).map(item => enrichLocalItem(item, item.id));
+        const remoteItems = Array.isArray(data.items) ? data.items : [];
+        const migratedItems = await migrateLocalArchive(remoteItems);
+        archive = mergeArchiveItems([
+          ...remoteItems,
+          ...migratedItems,
+          ...readLocalArchive()
+        ]);
         state.itemsLoaded = true;
         renderUniverse();
       }catch(_){
@@ -1224,21 +1300,17 @@
       }
     }
 
-    function connectRealtime(){
-      if(location.hostname.endsWith('github.io')) return;
-      if(eventSource || typeof EventSource === 'undefined') return;
-      try{
-        eventSource = new EventSource('/api/events');
-        eventSource.addEventListener('item', event => {
-          const incoming = enrichLocalItem(JSON.parse(event.data));
-          if(!archive.some(item => item.id === incoming.id)){
-            archive.push(incoming);
-            renderUniverse();
-            if(state.page === 'universe' && state.filter === 'all') showToast(`${incoming.galaxyName} received a new object`);
-          }
-        });
-        eventSource.onerror = () => {};
-      }catch(_){}
+    function startArchiveRefresh(){
+      if(archiveRefreshTimer) return;
+      archiveRefreshTimer = window.setInterval(() => {
+        if(state.page === 'universe' && !document.hidden) loadArchive();
+      }, 15_000);
+    }
+
+    function stopArchiveRefresh(){
+      if(!archiveRefreshTimer) return;
+      clearInterval(archiveRefreshTimer);
+      archiveRefreshTimer = 0;
     }
 
     function svgFor(variant='object'){
@@ -1888,7 +1960,7 @@
         shell.classList.add('released-mode');
         setFilterButtons();
         renderUniverse();
-        showToast('Released into archive');
+        showToast(newItem.pendingCloud ? 'Saved here — cloud sync pending' : 'Released into shared archive');
         navigate('universe');
         requestAnimationFrame(() => requestAnimationFrame(() => focusItem(newItem)));
         setTimeout(() => {
@@ -1904,16 +1976,11 @@
 
     async function saveReleasedItem(draft){
       try{
-        const res = await fetch('/api/items', {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json' },
-          body:JSON.stringify(draft)
-        });
-        if(!res.ok) throw new Error('Save failed');
-        const data = await res.json();
-        return enrichLocalItem({ ...data.item, mine:true }, data.item.id);
+        const saved = await requestCloudItem(draft);
+        rememberMine(saved.id);
+        return enrichLocalItem({ ...saved, mine:true, pendingCloud:false }, saved.id);
       }catch(_){
-        const item = enrichLocalItem({ ...draft, id:'mine-' + Date.now(), mine:true });
+        const item = enrichLocalItem({ ...draft, id:'mine-' + Date.now(), mine:true, pendingCloud:true });
         writeLocalArchive([...readLocalArchive(), item]);
         return item;
       }
