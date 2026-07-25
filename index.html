@@ -1056,7 +1056,8 @@
   <script>
     const $ = (sel, root=document) => root.querySelector(sel);
     const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
-    const cloudApiBase = (document.documentElement.dataset.apiBase || '').replace(/\/$/, '');
+    const configuredApiBase = (document.documentElement.dataset.apiBase || '').replace(/\/$/, '');
+    const cloudApiBase = location.hostname.endsWith('github.io') ? configuredApiBase : '';
     const apiUrl = path => `${cloudApiBase}${path}`;
 
     const state = {

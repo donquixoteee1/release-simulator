@@ -18,6 +18,16 @@ Vercel 项目需要配置：
 - `KV_REST_API_URL`（也兼容 `UPSTASH_REDIS_REST_URL`）
 - `KV_REST_API_TOKEN`（也兼容 `UPSTASH_REDIS_REST_TOKEN`）
 
+## Netlify 部署
+
+中国大陆用户可优先访问：
+
+- <https://release-simulator-cn.netlify.app>
+
+Netlify 同时托管静态页面和 `netlify/functions/items.js`，并将 `/api/items` 重写到同源函数，减少一次跨站请求。`netlify.toml` 包含构建、函数和路由配置；Netlify 项目已经连接 GitHub，`main` 分支更新后会自动部署。
+
+Netlify 项目同样需要在生产环境配置 `KV_REST_API_URL` 和 `KV_REST_API_TOKEN`。仅使用 `netlify.app` 全球域名不能保证所有中国大陆运营商始终可达；需要强可用性时，应使用已完成 ICP 备案的自定义域名和中国大陆 CDN。
+
 ## 本地运行
 
 ```bash
